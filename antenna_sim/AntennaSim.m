@@ -22,8 +22,10 @@ R4 = 2.236;
 
 Rtest = 1; % For getting RSSI at 1 meter distance
 
+% Wavelength for free space given our operating frequency
+lambdaCarrier = physconst('LightSpeed')/FreqCarrier;
+
 % Unknown parameters to configure
-% lambdaCarrier
 % Available input power (dBm) from tag
 
 % Run simulation
