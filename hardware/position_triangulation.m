@@ -1,11 +1,11 @@
 %% Position Function Using Triangulation
 % RFID Team
 % Curtis Manore
-close all; clear;
+%close all; clear;
 
 % Test Inputs (Uncomment lines to test)
 %distances = [2.828 2.236 1.414 2.236];
-%antenna_locs = [[0,0]; [0,3]; [3,3]; [3,0]]; %2D input for now
+antenna_locs = [[0,0]; [0,3]; [3,3]; [3,0]]; %2D input for now
 
 % Test Position Function
 %pos = position2d(distances,antenna_locs);
@@ -14,6 +14,24 @@ close all; clear;
 % Test Error Function
 %actPos = [2 2];
 %error = error2d(est_pos, actPos);
+
+%rssi=10; %dbm strength if we put db equal to room length
+RSSI = [out.RSSI1(1) out.RSSI2(1) out.RSSI3(1) out.RSSI4(1)];
+A=out.RSSI_test(1); %dbm strength when length=1m; Original A = 5
+d0=3; %length of room
+n = zeros(1,4,'double');
+for i = 1:4
+    n(i) = -(RSSI(i)-A)/(10*log10(d0)); %constant
+end
+nhat = mean(n);
+
+d = zeros(1,4,'double');
+for i = 1:4
+    %RSSI(i) = input() %strength received from tag
+    d(i)= 10^((-RSSI(i)-A)/(10*nhat)); %distance
+end
+pos = position2d(d,antenna_locs);
+est_pos = [pos(1) pos(2)];
 
 function pos = position2d(distances, antenna_locs)
     % Use nonlinear least squares approach, problem based
