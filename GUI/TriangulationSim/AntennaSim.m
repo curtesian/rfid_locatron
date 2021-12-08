@@ -30,4 +30,5 @@ lambdaCarrier = physconst('LightSpeed')/FreqCarrier;
 
 % Run simulation
 sim(model);
+save("DistanceData.mat")
 
