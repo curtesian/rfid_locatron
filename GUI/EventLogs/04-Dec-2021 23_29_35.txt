@@ -1,0 +1,22 @@
+Selecting Floorplan
+Beginning Search
+Tag1 found
+Selected Tag ID:    Tag2
+Beginning Search
+Tag2 found
+Beginning Search
+Tag2 found
+Selected Tag ID:    Tag1
+Beginning Search
+Tag1 found
+Selected Tag ID:    Tag3
+Beginning Search
+Tag3 found
+Beginning Search
+Tag3 found
+Beginning Search
+Tag3 found
+Selected Tag ID:    Tag2
+Beginning Search
+Tag2 found
+Closing App
