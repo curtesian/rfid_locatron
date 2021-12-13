@@ -6,6 +6,7 @@
 % Test Inputs (Uncomment lines to test)
 %distances = [2.828 2.236 1.414 2.236];
 antenna_locs = [[0,0]; [0,3]; [3,3]; [3,0]]; %2D input for now
+TagLocations = [1,1;1,2;2,2;2,1];
 
 % Test Position Function
 %pos = position2d(distances,antenna_locs);
@@ -15,23 +16,45 @@ antenna_locs = [[0,0]; [0,3]; [3,3]; [3,0]]; %2D input for now
 %actPos = [2 2];
 %error = error2d(est_pos, actPos);
 
-%rssi=10; %dbm strength if we put db equal to room length
-RSSI = [out.RSSI1(1) out.RSSI2(1) out.RSSI3(1) out.RSSI4(1)];
-A=out.RSSI_test(1); %dbm strength when length=1m; Original A = 5
-d0=3; %length of room
-n = zeros(1,4,'double');
-for i = 1:4
-    n(i) = -(RSSI(i)-A)/(10*log10(d0)); %constant
-end
-nhat = mean(n);
+A = 0.8838; % raw value from RSSI_test
+distances = DistEstimator(Data,A);
 
-d = zeros(1,4,'double');
+% 2D results processing
+est_pos = zeros(4,2);
+err2d = zeros(4,1);
 for i = 1:4
-    %RSSI(i) = input() %strength received from tag
-    d(i)= 10^((-RSSI(i)-A)/(10*nhat)); %distance
+    pos = position2d(distances(i,:),antenna_locs);
+    est_pos(i,:) = [pos(1) pos(2)];
+    err2d(i) = error2d(est_pos(i,:),TagLocations(i,:));
 end
-pos = position2d(d,antenna_locs);
-est_pos = [pos(1) pos(2)];
+%e = error2d([2.3754    2.3754],[2 2]);
+
+function distances = DistEstimator(Data,A)    
+    % A=Data.RSSI(5); %dbm strength when length=1m; Original A = 5
+    d0=3; %length of room
+    n = zeros(4);
+    nhat = zeros(4,1);
+    for i = 1:4
+        n(i,:) = [-(Data.Antenna1.RSSI(i)-A)/(10*log10(d0)), ...
+                -(Data.Antenna2.RSSI(i)-A)/(10*log10(d0)), ...
+                -(Data.Antenna3.RSSI(i)-A)/(10*log10(d0)), ...
+                -(Data.Antenna4.RSSI(i)-A)/(10*log10(d0))]; %constant
+        nhat(i) = mean(n(i,:));
+    end
+    
+    %nhat = mean(n);
+    distances = zeros(4);
+    for i = 1:4
+        %RSSI(i) = input() %strength received from tag
+        distances(i,:)= [10^((-Data.Antenna1.RSSI(i)-A)/(10*nhat(i))), ...
+                             10^((-Data.Antenna2.RSSI(i)-A)/(10*nhat(i))), ...
+                             10^((-Data.Antenna3.RSSI(i)-A)/(10*nhat(i))), ...
+                             10^((-Data.Antenna4.RSSI(i)-A)/(10*nhat(i)))];
+    end    
+end
+
+% pos = position2d(d,antenna_locs);
+% est_pos = [pos(1) pos(2)];
 
 function pos = position2d(distances, antenna_locs)
     % Use nonlinear least squares approach, problem based
