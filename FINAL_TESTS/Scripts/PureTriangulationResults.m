@@ -106,24 +106,24 @@ Data.Antenna2.AntennaPos = AntennaPosIndex(2,:);
 Data.Antenna3.AntennaPos = AntennaPosIndex(3,:);  
 Data.Antenna4.AntennaPos =AntennaPosIndex(4,:);  
 
-Data.Antenna1.RSSI = zeros(4);
-Data.Antenna2.RSSI = zeros(4);
-Data.Antenna3.RSSI = zeros(4);
-Data.Antenna4.RSSI = zeros(4);
+Data.Antenna1.RSSI = zeros(4,1);
+Data.Antenna2.RSSI = zeros(4,1);
+Data.Antenna3.RSSI = zeros(4,1);
+Data.Antenna4.RSSI = zeros(4,1);
 
 
-TagLocations = [1,1;2,2;3,3;4,4];
+TagLocations = [1,1;1,2;2,2;2,1];
 
     for TagLocationsCounter = 1:size(TagLocations,1)
         %============SIMULATION CALL==================%
         
 
-        set_param('KNN_DataGen/FS_PathLoss1','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(1,:), TagLocations(TagLocationsCounter,1)))));        set_param('KNN_DataGen/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi* Data.Antenna2.RSSI( x_index,y_index))))
-        set_param('KNN_DataGen/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(2,:), TagLocations(TagLocationsCounter,1)))));
-        set_param('KNN_DataGen/FS_PathLoss3','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(3,:), TagLocations(TagLocationsCounter,1)))));
-        set_param('KNN_DataGen/FS_PathLoss4','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(4,:), TagLocations(TagLocationsCounter,1)))));
+        set_param('KNN_DataGen/FS_PathLoss1','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(1,:), TagLocations(TagLocationsCounter,:)))));
+        set_param('KNN_DataGen/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(2,:), TagLocations(TagLocationsCounter,:)))));
+        set_param('KNN_DataGen/FS_PathLoss3','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(3,:), TagLocations(TagLocationsCounter,:)))));
+        set_param('KNN_DataGen/FS_PathLoss4','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(4,:), TagLocations(TagLocationsCounter,:)))));
 
-        SimOutput = sim(model, 'FastRestart', 'on');
+        SimOutput = sim(model, 'FastRestart', 'off');
         %Obtained Signal Strengths
         Data.Antenna1.RSSI(TagLocationsCounter)  =SimOutput.RSSI1(1);
         Data.Antenna2.RSSI(TagLocationsCounter) = SimOutput.RSSI2(1);
