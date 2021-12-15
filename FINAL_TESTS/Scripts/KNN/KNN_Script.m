@@ -1,10 +1,33 @@
+%%Number of Neighbors
+K = 10;
 
+
+
+XMax = 5;
+YMax = 5;
+GridResolution = 0.1;
+
+x = 0:GridResolution : XMax;
+y = 0:GridResolution : YMax;
+
+%X= Index (1) of grid Y= Index(2) of grid
+[X,Y] = meshgrid(x,y);  
+
+
+
+%% 
 N = 4; %Antenna Reader Count
 Data = import("FingerPrintingData.mat");
+
+antenna_locs = [[0,0]; [0,5]; [5,5]; [5,0]];
+
+
 model = 'KNN_Results';
 open(model)
+% Result crunching:
 
-
+RSSI_Fingerprints = [Data.Antenna1.RSSI(:),Data.Antenna1.RSSI(:),Data.Antenna1.RSSI(:),Data.Antenna1.RSSI(:)];
+Pos_Finferprints  = [Data.Antenna1.RSSI(:),Data.Antenna1.RSSI(:),Data.Antenna1.RSSI(:),Data.Antenna1.RSSI(:)];
 %% ====Simulation Params Setup===== %%
             FreqCarrier = 9.15e+08;
             Gr = 6; 
@@ -34,7 +57,7 @@ open(model)
             set_param('KNN_DataGen/Antenna_RX2','CarrierFreqRad',num2str(FreqCarrier))
             set_param('KNN_DataGen/Antenna_RX3','CarrierFreqRad',num2str(FreqCarrier))
             set_param('KNN_DataGen/Antenna_RX4','CarrierFreqRad',num2str(FreqCarrier))
-
+             Rtest = 1;
             set_param('KNN_DataGen/FS_PathLossTest','Gain',num2str(lambdaCarrier/(4*pi*Rtest)))
               
             set_param('KNN_DataGen/LNA','Zin',num2str(Zin_r'))
@@ -50,14 +73,15 @@ open(model)
            set_param('KNN_DataGen/RA4','CarrierFreq',num2str(FreqCarrier))
            set_param('KNN_DataGen/RA5','CarrierFreq',num2str(FreqCarrier))
 
+            
+      %============SIMULATION CALL==================%
+            %Place Tag at location in room
             R1 = 2.828;
             R2 = 2.236;
             R3 = 1.414;
             R4 = 2.236;
-            Rtest = 1;
+           
 
-      %============SIMULATION CALL==================%
-        
 
         set_param('KNN_DataGen/FS_PathLoss1','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(1,:), TagLocations(TagLocationsCounter,:)))));
         set_param('KNN_DataGen/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(2,:), TagLocations(TagLocationsCounter,:)))));
@@ -70,7 +94,25 @@ open(model)
         RSSI(2) = mean(SimOutput.RSSI2(1));
         RSSI(3) = mean(SimOutput.RSSI3(1));
         RSSI(4) = mean(SimOutput.RSSI4(1));
-        %=============================================%
-% Result crunching:
-antenna_locs = [[0,0]; [0,5]; [5,5]; [5,0]];
-
+        %RSSI in array for the TAG in question
+        
+        %% =================KNN====================================%
+        for ReferenceNodeNum = 1:size(RSSI,1)
+            for AntennaNodeNum = 1:4
+             ReferenceError(ReferenceNodeNum, AntennaNodeNum) = (RSSI_Fingerprints(ReferenceNodeNum, AntennaNodeNum) - RSSI(AntennaNodeNum)^2;
+            end
+        end
+        ReferenceError   = sqrt(sum(ReferenceError,2));
+        [out, index]     = sort(ReferenceError);
+        NearestNeighborRSSI = RSSI_Fingerprints(index);
+        NearestNeighborRSSI = NearestNeighborRSSI(1:K);
+        
+        NearestNeighborsCoords = getCoords(index)
+        
+        
+        
+        
+        
+        
+        
+        
