@@ -13,6 +13,9 @@ AntennaPosIndex = [X(1), Y(1);
                                     X(1),Y(end); 
                                     X(end), Y(end);
                                     X(end), Y(1)]; % [m]   
+
+TagLocations = [3.5,1;3,2;4,2;2,3];
+
 %% Attaching distance Dataset to simulation
 
 model = 'KNN_DataGen';
@@ -106,62 +109,137 @@ Data.Antenna2.AntennaPos = AntennaPosIndex(2,:);
 Data.Antenna3.AntennaPos = AntennaPosIndex(3,:);  
 Data.Antenna4.AntennaPos =AntennaPosIndex(4,:);  
 
-Data.Antenna1.DistMat = zeros( XMax / GridResolution, YMax / GridResolution);
-Data.Antenna2.DistMat = zeros( XMax / GridResolution, YMax / GridResolution);
-Data.Antenna3.DistMat = zeros( XMax / GridResolution, YMax / GridResolution);
-Data.Antenna4.DistMat = zeros( XMax / GridResolution, YMax / GridResolution);
+Data.Antenna1.RSSI = zeros(4,1);
+Data.Antenna2.RSSI = zeros(4,1);
+Data.Antenna3.RSSI = zeros(4,1);
+Data.Antenna4.RSSI = zeros(4,1);
 
-Data.Antenna1.RSSI = zeros( XMax / GridResolution, YMax / GridResolution);
-Data.Antenna2.RSSI = zeros( XMax / GridResolution, YMax / GridResolution);
-Data.Antenna3.RSSI = zeros( XMax / GridResolution, YMax / GridResolution);
-Data.Antenna4.RSSI = zeros( XMax / GridResolution, YMax / GridResolution);
 
-for AntennaPosCounter = 1:1
-%  for AntennaPosCounter = 1:size(AntennaPosIndex,1)
-    for x_index = 1 : (XMax) / GridResolution +1
-        for y_index =1 : (YMax) / GridResolution +1
 
-            Tag_pos = [(x_index-1)*GridResolution, (y_index-1)*GridResolution];   
+    for TagLocationsCounter = 1:size(TagLocations,1)
+        %============SIMULATION CALL==================%
+        
 
-            Data.Antenna1.DistMat( x_index,y_index) =  distanceCalc(Data.Antenna1.AntennaPos, Tag_pos);
-            Data.Antenna2.DistMat( x_index,y_index)=  distanceCalc(Data.Antenna2.AntennaPos, Tag_pos);
-            Data.Antenna3.DistMat( x_index,y_index)=  distanceCalc(Data.Antenna3.AntennaPos, Tag_pos);
-            Data.Antenna4.DistMat( x_index,y_index)=  distanceCalc(Data.Antenna4.AntennaPos, Tag_pos);
-            if((x_index == 1 && y_index ==1) || ...
-                    (x_index == 1 && y_index ==(YMax) / GridResolution +1) ||...
-                    (x_index == (XMax) / GridResolution +1 && y_index == 1) || ...
-                    (x_index == (XMax) / GridResolution +1 && y_index == (YMax) / GridResolution +1))
-                         Data.Antenna1.RSSI( x_index,y_index)  = inf;
-                        Data.Antenna2.RSSI( x_index,y_index) = inf;
-                        Data.Antenna3.RSSI( x_index,y_index) = inf;
-                        Data.Antenna4.RSSI( x_index,y_index) = inf;
-            else
-                     %============SIMULATION CALL==================%
-                set_param('KNN_DataGen/FS_PathLoss1','Gain',num2str(lambdaCarrier/(4*pi*  Data.Antenna1.DistMat( x_index,y_index))))
-                set_param('KNN_DataGen/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi* Data.Antenna2.DistMat( x_index,y_index))))
-                set_param('KNN_DataGen/FS_PathLoss3','Gain',num2str(lambdaCarrier/(4*pi*Data.Antenna3.DistMat( x_index,y_index))))
-                set_param('KNN_DataGen/FS_PathLoss4','Gain',num2str(lambdaCarrier/(4*pi*Data.Antenna4.DistMat( x_index,y_index))))
-    
-                SimOutput = sim(model, 'FastRestart', 'on');
-                %Obtained Signal Strengths
-                Data.Antenna1.RSSI( x_index,y_index) = mean(SimOutput.RSSI1(1));
-                Data.Antenna2.RSSI( x_index,y_index) = mean(SimOutput.RSSI2(1));
-                Data.Antenna3.RSSI( x_index,y_index) = mean(SimOutput.RSSI3(1));
-                Data.Antenna4.RSSI( x_index,y_index) = mean(SimOutput.RSSI4(1));
-            end
-                %=============================================%
-        end
+        set_param('KNN_DataGen/FS_PathLoss1','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(1,:), TagLocations(TagLocationsCounter,:)))));
+        set_param('KNN_DataGen/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(2,:), TagLocations(TagLocationsCounter,:)))));
+        set_param('KNN_DataGen/FS_PathLoss3','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(3,:), TagLocations(TagLocationsCounter,:)))));
+        set_param('KNN_DataGen/FS_PathLoss4','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(AntennaPosIndex(4,:), TagLocations(TagLocationsCounter,:)))));
+
+        SimOutput = sim(model, 'FastRestart', 'off');
+        %Obtained Signal Strengths
+        Data.Antenna1.RSSI(TagLocationsCounter)  =SimOutput.RSSI1(1);
+        Data.Antenna2.RSSI(TagLocationsCounter) = SimOutput.RSSI2(1);
+        Data.Antenna3.RSSI(TagLocationsCounter) = SimOutput.RSSI3(1);
+        Data.Antenna4.RSSI(TagLocationsCounter) = SimOutput.RSSI4(1);
     end
- end
- 
- clearvars -except Data DistMatrix GridResolution XMax YMax
+        %=============================================%
 
 
+% Result crunching:
+antenna_locs = [[0,0]; [0,5]; [5,5]; [5,0]];
+A = 0.8838; % raw value from RSSI_test
+distances = DistEstimator(Data,A);
+
+% 2D results processing
+est_pos = zeros(4,2);
+err2d = zeros(4,1);
+for i = 1:4
+    pos = position2d(distances(i,:),antenna_locs);
+    est_pos(i,:) = [pos(1) pos(2)];
+    err2d(i) = error2d(est_pos(i,:),TagLocations(i,:));
+end
+
+clearvars -except Data DistMatrix GridResolution XMax YMax est_pos err2d distances A antenna_locs
 
 function [dist2d] = distanceCalc(AntennaPos, TagPos)
     dist2d = norm(TagPos-AntennaPos);
 end
 
 
+%% From position_triangulation.m
+function distances = DistEstimator(Data,A)    
+    % A=Data.RSSI(5); %dbm strength when length=1m; Original A = 5
+    d0=3; %length of room
+    n = zeros(4);
+    nhat = zeros(4,1);
+    for i = 1:4
+        n(i,:) = [-(Data.Antenna1.RSSI(i)-A)/(10*log10(d0)), ...
+                -(Data.Antenna2.RSSI(i)-A)/(10*log10(d0)), ...
+                -(Data.Antenna3.RSSI(i)-A)/(10*log10(d0)), ...
+                -(Data.Antenna4.RSSI(i)-A)/(10*log10(d0))]; %constant
+        nhat(i) = mean(n(i,:));
+    end
+    
+    %nhat = mean(n);
+    distances = zeros(4);
+    for i = 1:4
+        %RSSI(i) = input() %strength received from tag
+        distances(i,:)= [10^((-Data.Antenna1.RSSI(i)-A)/(10*nhat(i))), ...
+                             10^((-Data.Antenna2.RSSI(i)-A)/(10*nhat(i))), ...
+                             10^((-Data.Antenna3.RSSI(i)-A)/(10*nhat(i))), ...
+                             10^((-Data.Antenna4.RSSI(i)-A)/(10*nhat(i)))];
+    end    
+end
 
+% pos = position2d(d,antenna_locs);
+% est_pos = [pos(1) pos(2)];
+
+function pos = position2d(distances, antenna_locs)
+    % Use nonlinear least squares approach, problem based
+    % Function works as expected, tested with data
+    xy = optimvar('xy',2);
+
+    % 2D Triangulation Equations
+    eq1 = ((xy(1) - antenna_locs(1,1))^2 + (xy(2) - antenna_locs(1,2))^2 == (distances(1))^2);
+    eq2 = ((xy(1) - antenna_locs(2,1))^2 + (xy(2) - antenna_locs(2,2))^2 == (distances(2))^2);
+    eq3 = ((xy(1) - antenna_locs(3,1))^2 + (xy(2) - antenna_locs(3,2))^2 == (distances(3))^2);
+    eq4 = ((xy(1) - antenna_locs(4,1))^2 + (xy(2) - antenna_locs(4,2))^2 == (distances(4))^2);
+
+    prob = eqnproblem;
+    prob.Equations.eq1 = eq1;
+    prob.Equations.eq2 = eq2;
+    prob.Equations.eq3 = eq3;
+    prob.Equations.eq4 = eq4;
+
+    x0.xy = [0 0];
+    [sol,fval,exitflag] = solve(prob,x0);
+    %disp(sol.xy)
+
+    % Return position 2D
+    pos = sol.xy;
+end
+
+function pos = position3d(distances, antenna_locs)
+    % Use nonlinear least squares approach, problem based
+    % Function works as expected, tested with data
+    xyz = optimvar('xyz',3);
+
+    % 3D Triangulation Equations
+    eq1 = ((xyz(1) - antenna_locs(1,1))^2 + (xyz(2) - antenna_locs(1,2))^2 + (xyz(3) - antenna_locs(1,3))^2 == (distances(1))^2);
+    eq2 = ((xyz(1) - antenna_locs(2,1))^2 + (xyz(2) - antenna_locs(2,2))^2 + (xyz(3) - antenna_locs(2,3))^2 == (distances(2))^2);
+    eq3 = ((xyz(1) - antenna_locs(3,1))^2 + (xyz(2) - antenna_locs(3,2))^2 + (xyz(3) - antenna_locs(3,3))^2 == (distances(3))^2);
+    eq4 = ((xyz(1) - antenna_locs(4,1))^2 + (xyz(2) - antenna_locs(4,2))^2 + (xyz(3) - antenna_locs(4,3))^2 == (distances(4))^2);
+
+    prob = eqnproblem;
+    prob.Equations.eq1 = eq1;
+    prob.Equations.eq2 = eq2;
+    prob.Equations.eq3 = eq3;
+    prob.Equations.eq4 = eq4;
+
+    x0.xyz = [0 0 0];
+    [sol,fval,exitflag] = solve(prob,x0);
+    %disp(sol.xyz)
+
+    % Return position 3D
+    pos = sol.xyz;
+end
+
+% Create error functions for results (2d and 3d)
+function e = error2d(estPos, actualPos)
+    e = sqrt((actualPos(1)-estPos(1))^2 + (actualPos(2)-estPos(2))^2);
+end
+
+function e = error3d(estPos, actualPos)
+    e = sqrt((actualPos(1)-estPos(1))^2 + (actualPos(2)-estPos(2))^2 + (actualPos(3)-estPos(3))^2);
+end
 
