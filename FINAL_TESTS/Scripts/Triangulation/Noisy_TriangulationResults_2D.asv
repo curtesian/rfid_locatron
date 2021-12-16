@@ -1,3 +1,4 @@
+
 %% Initial Setup
 XMax = 5;
 YMax = 5;
@@ -118,16 +119,12 @@ open(model)
 %  end
 
     for TagCounter = 1:size(TagLocations,1)
-        set_param('antenna_simNoisy/InputPower', 'Value', num2str(TagTransmissionPower(TagCounter)))
+        %============SIMULATION CALL==================%
         for Iterations = 1:2
         set_param('antenna_simNoisy/FS_PathLoss1','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(1,:), TagLocations(TagCounter,:)))));
         set_param('antenna_simNoisy/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(2,:), TagLocations(TagCounter,:)))));
         set_param('antenna_simNoisy/FS_PathLoss3','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(3,:), TagLocations(TagCounter,:)))));
         set_param('antenna_simNoisy/FS_PathLoss4','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(4,:), TagLocations(TagCounter,:)))));
-
-        %ADD set_param for noise block once you change the antenna_simNoisy
-        %===================================================
-        %model with AWGN
 
         SimOutput = sim(model, 'FastRestart', 'off');
         %Obtained Signal Strengths
@@ -136,13 +133,12 @@ open(model)
         %=============================================%
         distances = DistEstimator(Data,A);
         pos = position2d(distances,antenna_locs);
-        SimulationData.(TagNames{TagCounter}).EstimatedLocation(Iterations,:) = [pos(1), pos(2)];
-        SimulationData.(TagNames{TagCounter}).PositionError(Iterations) = error2d(SimulationData.(TagNames{i}).EstimatedLocation(Iterations,:),TagLocations(TagCounter,:));
+        SimulationData.(TagNames{i}).EstimatedLocation(Iterations,:) = [pos(1) pos(2)];
+        SimulationData.(TagNames{i}).PositionError(Iterations) = error2d(SimulationData.(TagNames{i}).EstimatedLocation(Iterations,:),TagLocations(TagCounter,:));
         end
     end
 
 clearvars -except SimulationData GridResolution XMax YMax est_pos err2d distances A antenna_locs
-
 
 %% From position_triangulation.m
 function distances = DistEstimator(Data,A)    
