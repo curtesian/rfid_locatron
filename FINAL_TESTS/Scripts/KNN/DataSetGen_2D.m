@@ -141,7 +141,8 @@ for AntennaPosCounter = 1:1
                 set_param('KNN_DataGen/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi* Data.Antenna2.DistMat( x_index,y_index))))
                 set_param('KNN_DataGen/FS_PathLoss3','Gain',num2str(lambdaCarrier/(4*pi*Data.Antenna3.DistMat( x_index,y_index))))
                 set_param('KNN_DataGen/FS_PathLoss4','Gain',num2str(lambdaCarrier/(4*pi*Data.Antenna4.DistMat( x_index,y_index))))
-    
+                set_param('KNN_DataGen/white_noise', 'seed', num2str(x_index + y_index)); % seed value varies from 2-100
+
                 SimOutput = sim(model, 'FastRestart', 'on');
                 %Obtained Signal Strengths
                 Data.Antenna1.RSSI( x_index,y_index) = mean(SimOutput.RSSI1(1));
