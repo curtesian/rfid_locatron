@@ -95,7 +95,7 @@ set_param('MultipleTrials_KNN_Noiseless/RA5','CarrierFreq',num2str(FreqCarrier))
 
 for  TagCounter = 1:size(TagLocations,1)
     set_param('MultipleTrials_KNN_Noiseless/InputPower', 'Value', num2str(TagTransmissionPower(TagCounter)))
-    for Iteration = 1:50
+    for Iteration = 1:1
         for K = 3:5
             
             set_param('MultipleTrials_KNN_Noiseless/FS_PathLoss1','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(1,:), TagLocations(TagCounter,:)))));

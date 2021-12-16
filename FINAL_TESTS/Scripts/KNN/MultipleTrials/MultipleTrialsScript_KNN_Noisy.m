@@ -16,7 +16,6 @@ y = 0:GridResolution : YMax;
 
 K = 3; % number of nearest neighbours
 
-least_distance_matrix = zeros( 51, 51,'double');
 row_values = [];
 col_values = [];
 antenna_locs = [[0,0]; [0,YMax]; [XMax,YMax]; [XMax,0]];
@@ -92,9 +91,9 @@ set_param('MultipleTrials_KNN_Noisy/RA4','CarrierFreq',num2str(FreqCarrier))
 set_param('MultipleTrials_KNN_Noisy/RA5','CarrierFreq',num2str(FreqCarrier))
 
 
-
+%
 for  TagCounter = 1:size(TagLocations,1)
-    set_param('MultipleTrials_KNN_Noisy/InputPower', 'Value', num2str(TagTransmissionPower(TagCounter)))
+    set_param('MultipleTrials_KNN_Noisy/Input_Power', 'Value', num2str(TagTransmissionPower(TagCounter)))
     for Iteration = 1:50
         for K = 3:5
             
@@ -102,13 +101,18 @@ for  TagCounter = 1:size(TagLocations,1)
             set_param('MultipleTrials_KNN_Noisy/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(2,:), TagLocations(TagCounter,:)))));
             set_param('MultipleTrials_KNN_Noisy/FS_PathLoss3','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(3,:), TagLocations(TagCounter,:)))));
             set_param('MultipleTrials_KNN_Noisy/FS_PathLoss4','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(4,:), TagLocations(TagCounter,:)))));
+            set_param('MultipleTrials_KNN_Noisy/white_noise', 'seed', num2str(Iteration));
 
-            SimOutput = sim(model, 'FastRestart', 'off');
+
+            SimOutput = sim(model, 'FastRestart', 'on');
             %Obtained Signal Strengths
-            RSSI(1)  =mean(SimOutput.RSSI1(1)); %calculated rssi from antenna 1 for the tag
-            RSSI(2) = mean(SimOutput.RSSI2(1));
-            RSSI(3) = mean(SimOutput.RSSI3(1));
-            RSSI(4) = mean(SimOutput.RSSI4(1));
+            RSSI(1)  =mean(SimOutput.RSSI1(:)); %calculated rssi from antenna 1 for the tag
+            RSSI(2) = mean(SimOutput.RSSI2(:));
+            RSSI(3) = mean(SimOutput.RSSI3(:));
+            RSSI(4) = mean(SimOutput.RSSI4(:));
+            val = 0;
+            least_distance_matrix = zeros( 51, 51);
+
             for i = 1: (XMax/GridResolution) +1
                 for j = 1:(YMax/GridResolution) +1
                     val = (Data.Antenna1.RSSI(i, j) - RSSI(1))^2 + (Data.Antenna2.RSSI(i, j) - RSSI(2))^2 + (Data.Antenna3.RSSI(i, j) - RSSI(3))^2 + (Data.Antenna4.RSSI(i, j) - RSSI(4))^2;
@@ -116,24 +120,28 @@ for  TagCounter = 1:size(TagLocations,1)
                     least_distance_matrix(i, j) = final;
                 end
             end
-            E = zeros(K,2);
+            
             [R, C] = ndgrid(1:size(least_distance_matrix, 1), 1:size(least_distance_matrix, 2));
             [out, idx] = sort(least_distance_matrix(:));
 
             positions = [R(idx), C(idx)];   %positions of nearest reference locations
-           
+            E = zeros(K, 1);
+
             E_total_square = 0;
             for k = 1: K
-                E(k,:) = least_distance_matrix(positions(k, :));
+                E(k) = least_distance_matrix(positions(k, 1), positions(k, 2));
             end
             for k = 1: K
-                E_total_square = E_total_square + 1/(E(k)^2);
+                E_total_square = E_total_square + (1/(E(k)^2));
             end
             final_pos = [0, 0];
             for k= 1: K
+%                 final_pos_x = vpa(final_pos_x) + (((1/E(k)^2)/E_total_square) * positions(k, 1));
+%                 final_pos_y = vpa(final_pos_y) + (((1/E(k)^2)/E_total_square) * positions(k, 2));
                 final_pos = final_pos + (((1/E(k)^2)/E_total_square) * positions(k, :));
+
             end
-            final_pos = final_pos * GridResolution;
+            final_pos = final_pos * GridResolution
             
             %Appending to SimulationData
             SimulationData.(KCount{K-2}).(TagNames{TagCounter}).EstimatedLocation(Iteration,:)= final_pos;  %K-2 to use as index for name array of tags
