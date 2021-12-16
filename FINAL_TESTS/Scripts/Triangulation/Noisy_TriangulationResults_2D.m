@@ -118,16 +118,19 @@ open(model)
 %  end
 
     for TagCounter = 1:size(TagLocations,1)
-        set_param('antenna_simNoisy/InputPower', 'Value', num2str(TagTransmissionPower(TagCounter)))
+        set_param('antenna_simNoisy/Available input power (dBm)', 'Value', num2str(TagTransmissionPower(TagCounter)))
         for Iterations = 1:2
         set_param('antenna_simNoisy/FS_PathLoss1','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(1,:), TagLocations(TagCounter,:)))));
         set_param('antenna_simNoisy/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(2,:), TagLocations(TagCounter,:)))));
         set_param('antenna_simNoisy/FS_PathLoss3','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(3,:), TagLocations(TagCounter,:)))));
         set_param('antenna_simNoisy/FS_PathLoss4','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(4,:), TagLocations(TagCounter,:)))));
 
-        %ADD set_param for noise block once you change the antenna_simNoisy
         %===================================================
         %model with AWGN
+        initial_seed = randi(5000);
+        noise_snr = 150;
+        set_param('antenna_simNoisy/AWGN_Channel','seed',num2str(initial_seed));
+        set_param('antenna_simNoisy/AWGN_Channel','EbNodB',num2str(noise_snr));
 
         SimOutput = sim(model, 'FastRestart', 'off');
         %Obtained Signal Strengths
