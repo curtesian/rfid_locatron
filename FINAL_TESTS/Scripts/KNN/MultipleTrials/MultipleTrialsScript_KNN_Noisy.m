@@ -104,7 +104,8 @@ for  TagCounter = 1:size(TagLocations,1)
             set_param('MultipleTrials_KNN_Noisy/white_noise', 'seed', num2str(Iteration));
 
 
-            SimOutput = sim(model, 'FastRestart', 'on');
+            SimOutput = sim(model, 'FastRestart', 'off');
+            get_param()
             %Obtained Signal Strengths
             RSSI(1)  =mean(SimOutput.RSSI1(:)); %calculated rssi from antenna 1 for the tag
             RSSI(2) = mean(SimOutput.RSSI2(:));

@@ -3,6 +3,9 @@ XMax = 5;
 YMax = 5;
 GridResolution = 0.1;
 
+load("Fingerprinting_data_Noisy.mat");
+
+
 x = 0:GridResolution : XMax;
 y = 0:GridResolution : YMax;
 
@@ -119,7 +122,7 @@ open(model)
 
     for TagCounter = 1:size(TagLocations,1)
         set_param('antenna_simNoisy/Available input power (dBm)', 'Value', num2str(TagTransmissionPower(TagCounter)))
-        for Iterations = 1:2
+        for Iterations = 1:50
         set_param('antenna_simNoisy/FS_PathLoss1','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(1,:), TagLocations(TagCounter,:)))));
         set_param('antenna_simNoisy/FS_PathLoss2','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(2,:), TagLocations(TagCounter,:)))));
         set_param('antenna_simNoisy/FS_PathLoss3','Gain',num2str(lambdaCarrier/(4*pi*distanceCalc(antenna_locs(3,:), TagLocations(TagCounter,:)))));
@@ -127,12 +130,14 @@ open(model)
 
         %===================================================
         %model with AWGN
-        initial_seed = randi(5000);
-        noise_snr = 150;
+        %initial_seed = randi(5000);
+        initial_seed = Iterations;
+
+        noise_snr = 110;
         set_param('antenna_simNoisy/AWGN_Channel','seed',num2str(initial_seed));
         set_param('antenna_simNoisy/AWGN_Channel','EbNodB',num2str(noise_snr));
 
-        SimOutput = sim(model, 'FastRestart', 'off');
+        SimOutput = sim(model, 'FastRestart', 'on');
         %Obtained Signal Strengths
         SimulationData.(TagNames{TagCounter}).RSSI(Iterations,:)  = [mean(SimOutput.RSSI1(:)), mean(SimOutput.RSSI2(:)),mean(SimOutput.RSSI3(:)),mean(SimOutput.RSSI4(:))];
         Data.RSSI =  [mean(SimOutput.RSSI1(:)), mean(SimOutput.RSSI2(:)),mean(SimOutput.RSSI3(:)),mean(SimOutput.RSSI4(:))];
