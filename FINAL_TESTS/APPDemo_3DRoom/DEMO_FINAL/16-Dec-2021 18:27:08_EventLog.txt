@@ -1,0 +1,11 @@
+Selecting Floorplan
+Selected Neighbor Count:   3
+Beginning Search
+Tag1 found
+Selected Tag ID:    Tag2
+Beginning Search
+Tag2 found
+Selected Tag ID:    Tag3
+Beginning Search
+Tag3 not found. Displaying last position
+Closing App
