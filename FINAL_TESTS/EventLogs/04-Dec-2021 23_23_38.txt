@@ -1,0 +1,23 @@
+Selecting Floorplan
+Selected Tag ID:    Tag3
+Selected Neighbor Count:   6
+Beginning Search
+Tag3 found
+Selected Tag ID:    Tag2
+Beginning Search
+Tag2 found
+Beginning Search
+Tag2 found
+Selected Tag ID:    Tag4
+Beginning Search
+Tag4 found
+Selected Neighbor Count:   10
+Beginning Search
+Tag4 found
+Beginning Search
+Tag4 found
+Selected Tag ID:    Tag3
+Beginning Search
+Tag3 found
+Selected Neighbor Count:   
+Closing App
